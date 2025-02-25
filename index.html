@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="welcome/0.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi playlist</title>
+
+  <!-- CSS principal (no modificado) -->
+  <style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        transition: background-color 1.5s ease;
+    }
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        background: linear-gradient(to bottom, #2a3b4b, #1a2634);
+        transition: background 0.5s ease;
+    }
+    .player {
+        width: 330px;
+        background: linear-gradient(to bottom, #2a3b4b, #1a263);
+        border-radius: 2rem;
+        padding: 1rem;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.7);
+        transition: all 0.5s ease-in-out;
+    }
+    .album-art {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+        transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .album-art img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .info {
+        color: #fff;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .device {
+        font-size: 0.875rem;
+        color: #8e9eab;
+        margin-bottom: 0.40rem;
+        margin-top: 1.40rem;
+        transition: color 0.3s ease;
+    }
+    .song-title {
+        font-size: 1.40rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        transition: all 0.3s ease;
+    }
+    .artist {
+        font-size: 1rem;
+        color: #8e9eab;
+        transition: color 0.3s ease;
+    }
+    .progress-bar {
+        height: 4px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 2px;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .progress {
+        width: 0%;
+        height: 100%;
+        background: #fff;
+        border-radius: 2px;
+        transition: width 0.1s linear, background-color 0.3s ease;
+    }
+    .time {
+        display: flex;
+        justify-content: space-between;
+        color: #8e9eab;
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+        transition: color 0.3s ease;
+    }
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    .main-controls {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        transition: gap 0.3s ease;
+    }
+    .control-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.3s ease;
+    }
+    .control-btn:hover {
+        transform: scale(1.1);
+    }
+    .control-btn:active {
+        transform: scale(0.9);
+    }
+    .volume-control {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+    .volume-slider {
+        flex-grow: 1;
+        -webkit-appearance: none;
+        height: 4px;
+        background: rgba(255,255,255,0.2);
+        outline: none;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+    .volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .volume-slider::-moz-range-thumb {
+        width: 12px;
+        height: 12px;
+        background: #ffffff;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: none;
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    .play-pause:hover {
+        animation: pulse 1s infinite;
+    }
+  </style>
+
+  <!-- Estilos extra para el menú y la barra de subida (sin afectar el CSS principal) -->
+  <style>
+    /* Botón de menú hamburguesa: siempre visible (las tres rayitas) */
+    #hamburger-btn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1100;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    #hamburger-btn svg {
+      fill: #fff;
+    }
+    /* Menú lateral: oculto por defecto con display: none */
+    #side-menu {
+      display: none;
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 320px;
+      height: 100%;
+      background: #1a2634;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.5);
+      z-index: 1099;
+      transition: all 0.3s ease;
+      padding: 20px;
+      color: #fff;
+      overflow-y: auto;
+    }
+    /* Barra de progreso de subida */
+    #upload-progress-container {
+      margin: 10px 0;
+      display: none;
+    }
+    #upload-progress {
+      width: 100%;
+      height: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Toast de notificaciones -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Botón de menú hamburguesa (las tres rayitas) -->
+  <button id="hamburger-btn">
+    <svg width="30" height="30" viewBox="0 0 100 80">
+      <rect width="100" height="15"></rect>
+      <rect y="30" width="100" height="15"></rect>
+      <rect y="60" width="100" height="15"></rect>
+    </svg>
+  </button>
+
+  <!-- Menú lateral (oculto por defecto) -->
+  <div id="side-menu">
+    <h2>Subir Multimedia</h2>
+    <form id="upload-form">
+      <!-- Campos nuevos para título y artista -->
+      <div style="margin-bottom: 10px;">
+        <label for="song-title-input">Título de la canción:</label>
+        <input type="text" id="song-title-input" placeholder="Título" required>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label for="song-artist-input">Artista de la canción:</label>
+        <input type="text" id="song-artist-input" placeholder="Artista" required>
+      </div>
+      <!-- Fin campos nuevos -->
+
+      <div style="margin-bottom: 10px;">
+        <label for="audio-file">Audio:</label>
+        <input type="file" id="audio-file" accept="audio/*">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label for="cover-file">Portada:</label>
+        <input type="file" id="cover-file" accept="image/*">
+      </div>
+      <div style="margin-bottom: 10px;">
+        <label for="video-file">Video:</label>
+        <input type="file" id="video-file" accept="video/*">
+      </div>
+
+      <!-- Barra de progreso de subida -->
+      <div id="upload-progress-container">
+        <label for="upload-progress">Subiendo:</label>
+        <progress id="upload-progress" value="0" max="100"></progress>
+      </div>
+
+      <button type="submit" style="background: #fff; color: #000; border: none; padding: 10px 20px; cursor: pointer;">
+        Subir
+      </button>
+    </form>
+  </div>
+
+  <!-- Contenedor del reproductor -->
+  <div class="container">
+    <div class="player">
+      <div class="album-art">
+        <img src="welcome/0.png" alt="Album cover">
+      </div>
+      <div class="info">
+        <div class="device">iPhone</div>
+        <div class="song-title">My play list</div>
+        <div class="artist">Ignacio Waak</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress"></div>
+      </div>
+      <div class="time">
+        <span>0:00</span>
+        <span>-0:00</span>
+      </div>
+      <div class="controls">
+        <button class="control-btn" aria-label="Add to favorites">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </button>
+        <div class="main-controls">
+          <button class="control-btn" aria-label="Previous track">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.5 3L4.5 12L12.5 21V3Z"></path>
+              <path d="M20.5 3L12.5 12L20.5 21V3Z"></path>
+            </svg>
+          </button>
+          <button class="control-btn play-pause" aria-label="Play or pause">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 3L19 12L5 21V3Z"></path>
+            </svg>
+          </button>
+          <button class="control-btn" aria-label="Next track">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.5 3L19.5 12L11.5 21V3Z"></path>
+              <path d="M3.5 3L11.5 12L3.5 21V3Z"></path>
+            </svg>
+          </button>
+        </div>
+        <button class="control-btn" aria-label="AirPlay">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path>
+            <polygon points="12 15 17 21 7 21 12 15"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="volume-control">
+        <button class="control-btn" aria-label="Volume">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+        </button>
+        <input type="range" min="0" max="100" value="50" class="volume-slider" aria-label="Volume control">
+      </div>
+    </div>
+  </div>
+
+  <!-- Script principal: Firebase + Lógica del reproductor y menú -->
+  <script type="module">
+    /************************************************
+     * IMPORTS DE FIREBASE
+     ************************************************/
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
+    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-storage.js";
+
+    /************************************************
+     * CONFIGURACIÓN DE FIREBASE
+     ************************************************/
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_USvfSXAqZf7hQhJCon0WulnrrINB7cI",
+      authDomain: "the-pic-c437e.firebaseapp.com",
+      databaseURL: "https://the-pic-c437e-default-rtdb.firebaseio.com",
+      projectId: "the-pic-c437e",
+      storageBucket: "the-pic-c437e.appspot.com",
+      messagingSenderId: "750954597180",
+      appId: "1:750954597180:web:d7b67c6b60f4d3bb17ec39"
+    };
+
+    const appFirebase = initializeApp(firebaseConfig);
+    const database = getDatabase(appFirebase);
+    const storage = getStorage(appFirebase);
+
+    /************************************************
+     * VARIABLES GLOBALES Y REFERENCIAS
+     ************************************************/
+    let songs = [];
+    let currentSongIndex = 0;
+    const audio = new Audio();
+    let isWelcomeScreen = true;
+
+    const songsRef = ref(database, 'songs');
+
+    // Escuchar cambios en la base de datos
+    onValue(songsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        songs = Object.values(data);
+      } else {
+        songs = [];
+      }
+      if (!isWelcomeScreen && songs.length > 0) {
+        updatePlayer();
+      }
+    });
+
+    /************************************************
+     * FUNCIÓN PARA ACTUALIZAR EL REPRODUCTOR
+     ************************************************/
+    const updatePlayer = () => {
+      if (isWelcomeScreen) {
+        const albumArtContainer = document.querySelector('.album-art');
+        albumArtContainer.innerHTML = '';
+        const imgElement = document.createElement('img');
+        imgElement.src = "welcome/0.png";
+        imgElement.style.width = '100%';
+        imgElement.style.height = '100%';
+        imgElement.style.objectFit = 'cover';
+        imgElement.style.opacity = '1';
+        imgElement.style.transition = 'opacity 2s ease';
+        albumArtContainer.appendChild(imgElement);
+
+        document.querySelector('.song-title').textContent = "Mi Playlist";
+        document.querySelector('.artist').textContent = "Ignacio Wack";
+        document.querySelector('.device').textContent = "iPhone";
+        document.querySelector('.device').style.display = 'block';
+        return;
+      }
+
+      if (songs.length === 0) {
+        console.warn("No hay canciones cargadas.");
+        return;
+      }
+
+      const { title, artist, image, video, audio: audioSrc, type } = songs[currentSongIndex];
+
+      document.querySelector('.song-title').textContent = title || "Sin título";
+      document.querySelector('.artist').textContent = artist || "Desconocido";
+
+      const albumArtContainer = document.querySelector('.album-art');
+      albumArtContainer.innerHTML = '';
+
+      const imgElement = new Image();
+      imgElement.src = image || "welcome/0.png";
+      imgElement.loading = "lazy";
+      imgElement.style.width = '100%';
+      imgElement.style.height = '100%';
+      imgElement.style.objectFit = 'cover';
+      albumArtContainer.appendChild(imgElement);
+
+      if (type === "video" && video) {
+        setTimeout(() => {
+          const existingVideo = albumArtContainer.querySelector('video');
+          if (existingVideo) {
+            existingVideo.remove();
+          }
+          const videoElement = document.createElement('video');
+          videoElement.src = video;
+          videoElement.autoplay = true;
+          videoElement.loop = true;
+          videoElement.muted = true;
+          videoElement.style.width = '100%';
+          videoElement.style.height = '100%';
+          videoElement.style.objectFit = 'cover';
+          albumArtContainer.appendChild(videoElement);
+
+          videoElement.addEventListener('canplaythrough', () => {
+            imgElement.style.opacity = '0.6';
+            videoElement.style.opacity = '1';
+          });
+
+          setTimeout(() => {
+            imgElement.remove();
+          }, 500);
+        }, 8000);
+      }
+
+      if (audioSrc) {
+        if (audio.src !== audioSrc) {
+          audio.src = audioSrc;
+          audio.preload = "auto";
+        }
+        audio.play().catch(error => {
+          console.log("Error al reproducir automáticamente:", error);
+        });
+        updatePlayPauseButton(true);
+      }
+    };
+
+    /************************************************
+     * VOLUMEN
+     ************************************************/
+    document.querySelector('.volume-control').addEventListener('input', (e) => {
+      const volume = e.target.value / 100;
+      audio.volume = volume;
+    });
+
+    /************************************************
+     * FIN DE CANCIÓN
+     ************************************************/
+    audio.addEventListener('ended', () => {
+      if (songs.length > 0) {
+        currentSongIndex = (currentSongIndex + 1) % songs.length;
+        updatePlayer();
+        audio.play();
+      }
+    });
+
+    /************************************************
+     * PLAY / PAUSE
+     ************************************************/
+    const updatePlayPauseButton = (isPlaying) => {
+      const playPauseBtn = document.querySelector('.play-pause svg');
+      if (isPlaying) {
+        playPauseBtn.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+      } else {
+        playPauseBtn.innerHTML = '<path d="M5 3L19 12L5 21V3Z"></path>';
+      }
+    };
+
+    document.querySelector('.play-pause').addEventListener('click', () => {
+      if (songs.length === 0) return;
+      if (audio.paused) {
+        audio.play();
+        updatePlayPauseButton(true);
+        isWelcomeScreen = false;
+        updatePlayer();
+      } else {
+        audio.pause();
+        updatePlayPauseButton(false);
+      }
+    });
+
+    /************************************************
+     * NEXT / PREVIOUS
+     ************************************************/
+    document.querySelector('.control-btn[aria-label="Next track"]').addEventListener('click', () => {
+      if (songs.length === 0) return;
+      currentSongIndex = (currentSongIndex + 1) % songs.length;
+      isWelcomeScreen = false;
+      updatePlayer();
+    });
+
+    document.querySelector('.control-btn[aria-label="Previous track"]').addEventListener('click', () => {
+      if (songs.length === 0) return;
+      currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+      isWelcomeScreen = false;
+      updatePlayer();
+    });
+
+    /************************************************
+     * PROGRESO DE REPRODUCCIÓN
+     ************************************************/
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60) || 0;
+      const secs = Math.floor(seconds % 60) || 0;
+      return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+
+    audio.addEventListener('timeupdate', () => {
+      const progressBar = document.querySelector('.progress');
+      const currentTime = document.querySelector('.time span:first-child');
+      const durationTime = document.querySelector('.time span:last-child');
+
+      if (!audio.duration) return;
+      const progressPercentage = (audio.currentTime / audio.duration) * 100 || 0;
+      progressBar.style.width = `${progressPercentage}%`;
+
+      currentTime.textContent = formatTime(audio.currentTime);
+      durationTime.textContent = `-${formatTime(audio.duration - audio.currentTime)}`;
+    });
+
+    const progressBarContainer = document.querySelector('.progress-bar');
+    progressBarContainer.addEventListener('click', (e) => {
+      if (!audio.duration) return;
+      const clickPosition = e.clientX - progressBarContainer.getBoundingClientRect().left;
+      const clickPercentage = Math.min(Math.max(clickPosition / progressBarContainer.offsetWidth, 0), 1);
+      audio.currentTime = clickPercentage * audio.duration;
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updatePlayer();
+    });
+
+    /************************************************
+     * MENÚ HAMBURGUESA (Mostrar/ocultar)
+     ************************************************/
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const sideMenu = document.getElementById('side-menu');
+    let menuOpen = false;
+
+    hamburgerBtn.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      if (menuOpen) {
+        sideMenu.style.display = 'block';
+      } else {
+        sideMenu.style.display = 'none';
+      }
+    });
+
+    /************************************************
+     * SUBIDA DE ARCHIVOS CON BARRA DE PROGRESO
+     ************************************************/
+    const uploadForm = document.getElementById('upload-form');
+    const uploadProgressContainer = document.getElementById('upload-progress-container');
+    const uploadProgressBar = document.getElementById('upload-progress');
+    const toast = document.getElementById('toast');
+
+    // Nuevos inputs para título y artista
+    const songTitleInput = document.getElementById('song-title-input');
+    const songArtistInput = document.getElementById('song-artist-input');
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
+
+    // Función para subir un archivo a Firebase Storage y devolver la URL
+    function uploadFile(file, folder, onProgress) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          return resolve("");
+        }
+        const fileRef = storageRef(storage, folder + '/' + file.name);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            onProgress(progress);
+          },
+          (error) => {
+            reject(error);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              resolve(downloadURL);
+            });
+          }
+        );
+      });
+    }
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const audioFile = document.getElementById('audio-file').files[0];
+      const coverFile = document.getElementById('cover-file').files[0];
+      const videoFile = document.getElementById('video-file').files[0];
+      const titleValue = songTitleInput.value.trim() || "Nuevo Audio";
+      const artistValue = songArtistInput.value.trim() || "Desconocido";
+
+      // Mostrar barra de progreso
+      uploadProgressContainer.style.display = 'block';
+      uploadProgressBar.value = 0;
+
+      try {
+        let audioUrl = "";
+        let coverUrl = "";
+        let videoUrl = "";
+
+        if (audioFile) {
+          uploadProgressBar.value = 0;
+          audioUrl = await uploadFile(audioFile, "audios", (p) => {
+            uploadProgressBar.value = p;
+          });
+        }
+
+        if (coverFile) {
+          uploadProgressBar.value = 0;
+          coverUrl = await uploadFile(coverFile, "portadas", (p) => {
+            uploadProgressBar.value = p;
+          });
+        }
+
+        if (videoFile) {
+          uploadProgressBar.value = 0;
+          videoUrl = await uploadFile(videoFile, "videos", (p) => {
+            uploadProgressBar.value = p;
+          });
+        }
+
+        const newSong = {
+          title: titleValue,
+          artist: artistValue,
+          image: coverUrl || "welcome/0.png",
+          audio: audioUrl,
+          video: videoUrl,
+          type: videoUrl ? "video" : "image"
+        };
+
+        const newSongRef = push(songsRef);
+        await set(newSongRef, newSong);
+
+        showToast("¡Tu canción ya ha sido cargada!");
+        sideMenu.style.display = 'none';
+        menuOpen = false;
+        uploadForm.reset();
+        uploadProgressContainer.style.display = 'none';
+        uploadProgressBar.value = 0;
+      } catch (error) {
+        console.error("Error al subir la canción:", error);
+        showToast("Error al subir la canción: " + error.message);
+        uploadProgressContainer.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

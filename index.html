@@ -390,7 +390,7 @@
         const albumArtContainer = document.querySelector('.album-art');
         albumArtContainer.innerHTML = '';
         const imgElement = document.createElement('img');
-        imgElement.src = "welcome/0.png";
+        imgElement.src = "0.png";
         imgElement.style.width = '100%';
         imgElement.style.height = '100%';
         imgElement.style.objectFit = 'cover';
@@ -419,7 +419,7 @@
       albumArtContainer.innerHTML = '';
 
       const imgElement = new Image();
-      imgElement.src = image || "welcome/0.png";
+      imgElement.src = image || "0.png";
       imgElement.loading = "lazy";
       imgElement.style.width = '100%';
       imgElement.style.height = '100%';
@@ -449,7 +449,7 @@
 
           setTimeout(() => {
             imgElement.remove();
-          }, 500);
+          }, 990);
         }, 8000);
       }
 
@@ -664,7 +664,7 @@
         const newSong = {
           title: titleValue,
           artist: artistValue,
-          image: coverUrl || "welcome/0.png",
+          image: coverUrl || "0.png",
           audio: audioUrl,
           video: videoUrl,
           type: videoUrl ? "video" : "image"
